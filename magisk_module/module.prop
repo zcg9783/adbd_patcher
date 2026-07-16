@@ -1,0 +1,7 @@
+id=adbd_patcher
+name=AdbPatcher
+version=v1.0
+versionCode=10
+author=weishu & 早茶光
+description=开启ADB ROOT并强制ADB授权
+minMagisk=21000
