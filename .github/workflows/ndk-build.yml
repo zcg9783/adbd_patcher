@@ -5,10 +5,10 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -18,12 +18,15 @@ jobs:
       with:
         ndk-version: r21e
         
+    - name: Set executable permission for build.sh
+      run: chmod +x build.sh
+    
     - name: Build adb_root
       run: ./build.sh
     
     - uses: actions/upload-artifact@main
       with:
-       name: adb_root
-       path: |
-        magisk_module/*
-        !magisk_module/*.DS_Store
+        name: adb_root
+        path: |
+          magisk_module/*
+          !magisk_module/*.DS_Store
