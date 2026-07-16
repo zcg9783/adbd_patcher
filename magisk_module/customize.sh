@@ -1,19 +1,16 @@
 #!/system/bin/sh
 
-ADBD_PATH=$(which adbd)
-case "$ADBD_PATH" in
-    /apex/com.android.adbd/bin/adbd)
-        ADBD_REAL="/apex/com.android.adbd/bin/adbd.real"
-        ADBD_DIR="/apex/com.android.adbd/bin"
-        ;;
-    /system/bin/adbd)
-        ADBD_REAL="/system/bin/adbd.real"
-        ADBD_DIR="/system/bin"
-        ;;
-    *)
-        abort "Unsupported adbd path: $ADBD_PATH"
-        ;;
-esac
+if [ -f "/apex/com.android.adbd/bin/adbd" ]; then
+    ADBD_PATH="/apex/com.android.adbd/bin/adbd"
+    ADBD_REAL="/apex/com.android.adbd/bin/adbd.real"
+    ADBD_DIR="/apex/com.android.adbd/bin"
+elif [ -f "/system/bin/adbd" ]; then
+    ADBD_PATH="/system/bin/adbd"
+    ADBD_REAL="/system/bin/adbd.real"
+    ADBD_DIR="/system/bin"
+else
+    exit 0
+fi
 
 case $ARCH in
     arm64)   ABI="arm64-v8a"   ;;
@@ -23,10 +20,10 @@ case $ARCH in
     *)       abort "Unsupported architecture: $ARCH" ;;
 esac
 
-MOD_ADBD="$MODPATH$ADBD_DIR/adbd"
-MOD_ADBD_REAL="$MODPATH$ADBD_DIR/adbd.real"
+MOD_ADBD="$MODPATH/system$ADBD_DIR/adbd"
+MOD_ADBD_REAL="$MODPATH/system$ADBD_DIR/adbd.real"
 
-mkdir -p "$MODPATH$ADBD_DIR"
+mkdir -p "$MODPATH/system$ADBD_DIR"
 
 if [ -f "$ADBD_PATH" ]; then
     cp -f "$ADBD_PATH" "$MOD_ADBD_REAL"

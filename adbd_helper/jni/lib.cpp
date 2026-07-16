@@ -1,21 +1,22 @@
-#include <string>
+#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <cstring>
+#include <string>
 
-__BEGIN_DECLS
+extern "C" {
 
 int __android_log_is_debuggable() {
     return 1;
 }
 
 int property_get(const char* key, char* value, const char* default_value) {
-    if (!strcmp("ro.debuggable", key)) {
+    if (key && !strcmp(key, "ro.debuggable")) {
         if (value) {
             strcpy(value, "1");
-            return strlen(value);
+            return 1;
         }
+        return 1;
     }
-    
     static auto real_property_get = reinterpret_cast<decltype(property_get)*>(
         dlsym(RTLD_NEXT, "property_get"));
     if (real_property_get) {
@@ -24,9 +25,19 @@ int property_get(const char* key, char* value, const char* default_value) {
     return -1;
 }
 
+}
+
 bool adbd_auth_verify(const char* token, size_t token_size,
                       const char* sig, int sig_len) {
     return true;
 }
 
-__END_DECLS
+bool adbd_auth_verify(const char* token, size_t token_size,
+                      const std::string& sig) {
+    return true;
+}
+
+bool adbd_auth_verify(const char* token, size_t token_size,
+                      const std::string& sig, std::string* auth_key) {
+    return true;
+}
