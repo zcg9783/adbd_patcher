@@ -1,35 +1,59 @@
 #!/bin/bash
+set -e
 
-if [ "$1" = "clean" ]; then
-    cd adbd_helper && ndk-build clean
-    exit
+echo "Starting build for adbd_root..."
+
+if ! command -v ndk-build &> /dev/null; then
+    echo "ERROR: ndk-build not found in PATH. Please install Android NDK and set PATH."
+    exit 1
 fi
 
-cd adbd_helper && ndk-build
+echo "Compiling native code with ndk-build..."
+ndk-build
+
+if [ ! -d "libs" ]; then
+    echo "ERROR: libs directory not found after ndk-build. Build may have failed."
+    exit 1
+fi
 
 MODULE_DIR="magisk_module"
-rm -rf $MODULE_DIR/bin $MODULE_DIR/lib
-mkdir -p $MODULE_DIR/bin/arm64-v8a
-mkdir -p $MODULE_DIR/bin/armeabi-v7a
-mkdir -p $MODULE_DIR/bin/x86
-mkdir -p $MODULE_DIR/bin/x86_64
-mkdir -p $MODULE_DIR/lib/arm64-v8a
-mkdir -p $MODULE_DIR/lib/armeabi-v7a
-mkdir -p $MODULE_DIR/lib/x86
-mkdir -p $MODULE_DIR/lib/x86_64
+if [ ! -d "$MODULE_DIR" ]; then
+    echo "ERROR: $MODULE_DIR directory not found."
+    exit 1
+fi
 
-cp adbd_helper/libs/arm64-v8a/adbd $MODULE_DIR/bin/arm64-v8a/
-cp adbd_helper/libs/arm64-v8a/libadb_root_helper.so $MODULE_DIR/lib/arm64-v8a/
+echo "Preparing Magisk module structure..."
+mkdir -p "$MODULE_DIR/bin"/{arm64-v8a,armeabi-v7a,x86,x86_64}
+mkdir -p "$MODULE_DIR/lib"/{arm64-v8a,armeabi-v7a,x86,x86_64}
 
-cp adbd_helper/libs/armeabi-v7a/adbd $MODULE_DIR/bin/armeabi-v7a/
-cp adbd_helper/libs/armeabi-v7a/libadb_root_helper.so $MODULE_DIR/lib/armeabi-v7a/
+echo "Copying binaries for all architectures..."
+for arch in arm64-v8a armeabi-v7a x86 x86_64; do
+    if [ -f "libs/$arch/adbd" ]; then
+        cp "libs/$arch/adbd" "$MODULE_DIR/bin/$arch/"
+        echo "OK: $arch/adbd"
+    else
+        echo "WARNING: libs/$arch/adbd not found, skipping"
+    fi
+    if [ -f "libs/$arch/libadb_root_helper.so" ]; then
+        cp "libs/$arch/libadb_root_helper.so" "$MODULE_DIR/lib/$arch/"
+        echo "OK: $arch/libadb_root_helper.so"
+    else
+        echo "WARNING: libs/$arch/libadb_root_helper.so not found, skipping"
+    fi
+done
 
-cp adbd_helper/libs/x86/adbd $MODULE_DIR/bin/x86/
-cp adbd_helper/libs/x86/libadb_root_helper.so $MODULE_DIR/lib/x86/
+if [ -f "README.md" ]; then
+    cp README.md "$MODULE_DIR/"
+    echo "README.md copied"
+else
+    echo "README.md not found, creating an empty one"
+    touch "$MODULE_DIR/README.md"
+fi
 
-cp adbd_helper/libs/x86_64/adbd $MODULE_DIR/bin/x86_64/
-cp adbd_helper/libs/x86_64/libadb_root_helper.so $MODULE_DIR/lib/x86_64/
+echo "Packaging Magisk module..."
+cd "$MODULE_DIR"
+zip -r ../adb_root.zip . > /dev/null
+cd ..
 
-cp README.md $MODULE_DIR/
-
-cd $MODULE_DIR && zip -r ../adb_root.zip -x "*.DS_Store" -- *
+echo "Build complete! Output: adb_root.zip"
+ls -lh adb_root.zip
