@@ -25,19 +25,9 @@ int property_get(const char* key, char* value, const char* default_value) {
     return -1;
 }
 
-}
-
 bool adbd_auth_verify(const char* token, size_t token_size,
                       const char* sig, int sig_len) {
     return true;
 }
 
-bool adbd_auth_verify(const char* token, size_t token_size,
-                      const std::string& sig) {
-    return true;
-}
-
-bool adbd_auth_verify(const char* token, size_t token_size,
-                      const std::string& sig, std::string* auth_key) {
-    return true;
 }
